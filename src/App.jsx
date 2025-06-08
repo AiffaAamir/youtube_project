@@ -1,27 +1,37 @@
-import { useState } from 'react'
-import './App.css'
-import { getDatabase, ref, set } from 'firebase/database'
-import { app } from './firebase'
-
-const db = getDatabase(app)
+import React, { useEffect, useState } from "react";
+import { useFirebase } from "./context/firebase";
+import Signin from "./pages/signin";
+import SuccessPage from "./pages/successPage";
+import SignupPage from "./pages/signup";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const firebase = useFirebase();
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true); // ✅ prevent UI flicker
 
-  const putData = () => {
-    set(ref(db, "users/aiffa"), {
-      id: 1,
-      name: "aiffa",
-      age: 21,
-    })
-  }
+  useEffect(() => {
+    const unsubscribe = firebase.listenToAuthChanges((currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, [firebase]);
+
+  if (loading) return <p>Loading...</p>;
 
   return (
     <>
-      <h1>Firebase Project</h1>
-      <button onClick={putData}>Send Data</button>
+      <h1>Firebase Auth Project</h1>
+      {user ? (
+        <SuccessPage />
+      ) : (
+        <>
+          <SignupPage />
+          <Signin />
+        </>
+      )}
     </>
-  )
+  );
 }
 
-export default App
+export default App;
